@@ -16,7 +16,7 @@ import (
 type Fetcher struct {
 	endpoint    string
 	accessToken string
-	offset      int64
+	offset      int
 	err         error
 	links       []*Bitlink
 }
@@ -82,6 +82,7 @@ func (f *Fetcher) Fetch() (ok bool) {
 		return
 	}
 	f.links = data.Data.LinkHistory
+	f.offset += len(f.links)
 	if len(f.links) > 0 {
 		return true
 	}
@@ -110,6 +111,7 @@ func main() {
 	}
 
 	output := csv.NewWriter(os.Stdout)
+	defer output.Flush()
 	output.Write([]string{"bitlink", "long_url", "title", "notes", "created", "created_ts"})
 	for fetcher.Fetch() {
 		for _, l := range fetcher.Bitlinks() {
@@ -119,5 +121,4 @@ func main() {
 	if err := fetcher.Error(); err != nil {
 		log.Printf("Error: %s", err)
 	}
-
 }
