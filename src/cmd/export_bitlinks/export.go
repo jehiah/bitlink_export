@@ -99,6 +99,8 @@ func (f *Fetcher) Error() error {
 func main() {
 	accessToken := flag.String("access-token", "", "Bitly OAuth Access Token - https://bitly.com/a/oauth_apps")
 	endpoint := flag.String("api", "https://api-ssl.bitly.com", "Bitly API Endpoint")
+	outputFile := flag.String("output-file", "", "output.csv (or blank for stdout)")
+
 	flag.Parse()
 
 	if *accessToken == "" {
@@ -110,7 +112,18 @@ func main() {
 		endpoint:    *endpoint,
 	}
 
-	output := csv.NewWriter(os.Stdout)
+	var output *csv.Writer
+	switch *outputFile {
+	case "":
+		output = csv.NewWriter(os.Stdout)
+	default:
+		f, err := os.Create(*outputFile)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+		defer f.Close()
+		output = csv.NewWriter(f)
+	}
 	defer output.Flush()
 	output.Write([]string{"bitlink", "long_url", "title", "notes", "created", "created_ts"})
 	for fetcher.Fetch() {
